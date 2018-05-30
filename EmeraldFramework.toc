@@ -1,0 +1,9 @@
+## Interface: 11200
+## Title: EmeraldFramework
+## Notes: framework for addons
+## Version: 0.1
+## Author: WobLight
+## SavedVariables: test
+Core.lua
+UI.lua
+ 
