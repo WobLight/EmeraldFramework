@@ -437,7 +437,6 @@ function Bind:new(f)
         f = loadstring(format("return function(self)return %s end", f))()
     end
     o._f = f
-    o._cs = weakTable()
     setmetatable(o, Bind_MT)
     return o
 end
