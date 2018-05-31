@@ -273,7 +273,7 @@ Object_MT.__newindex = function (self, k, v)
         v = Engine.bind(function() return bp:_get() end)
     end
     if isBind(v) then
-        v.parent = p.parent
+        v.parent = self
         v:update()
         v.valueChanged:connect(function(val) p:set(val) end)
         p.bind = v
