@@ -2,7 +2,7 @@ local Engine = CreateFrame("frame", "EFrame")
 
 local function weakTable()
     local t = {}
-    setmetatable(t, {__call = 'v'})
+    setmetatable(t, {__mode = 'v'})
     return t
 end
 
