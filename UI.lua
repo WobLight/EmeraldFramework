@@ -18,9 +18,11 @@ function EFrame:recycleObject(f)
     tinsert(self.objectRecycler[t],f)
 end
 
-function EFrame:newFrame(t)
+function EFrame:newFrame(t,parent)
     t = strlower(t)
-    return tremove(self.frameRecycler[t] or {}) or CreateFrame(t)
+    local f = tremove(self.frameRecycler[t] or {}) or CreateFrame(t)
+    f:SetParent(parent)
+    return f
 end
 
 function EFrame:newObject(t,p,m)
@@ -954,6 +956,88 @@ function RadioButton:new(parent)
     return o
 end
 setmetatable(RadioButton, {__call = RadioButton.new})
+
+TextArea = {type = "TextArea"}
+
+TextArea_MT = Object.IndexWrapper(Item_MT, {__index=TextArea})
+TextArea_MT.__newindex = Item_MT.__newindex
+
+function TextArea:new(parent)
+    local o = Item(parent, EFrame:newFrame("ScrollFrame"))
+    o.n_text = EFrame:newFrame("EditBox",o.frame)
+    o.frame:SetScrollChild(o.n_text)
+    o.n_text:SetAllPoints(o.frame)
+    o.n_text:SetFontObject("ChatFontNormal")
+    o.n_text:SetMultiLine(1)
+    o.n_text:SetAutoFocus(false)
+    setmetatable(o, TextArea_MT)
+    o:attach("text","getText","setText")
+    o:attach("focus", nil, "setFocus")
+    o:attach("color",nil,"setColor")
+    o:attach("shadowColor","getShadowColor","setShadowColor")
+    o:attach("shadowOffset","getShadowOffset","setShadowOffset")
+    o:attach("outline","getOutline","setOutline")
+    o:attach("justifyH","getJustifyH","setJustifyH")
+    o:attach("justifyV","getJustifyV","setJustifyV")
+    o.text = ""
+    o._focus.value = true
+    o.n_text:SetScript("OnTextChanged", function() o.textChanged(o.text) end)
+    o.n_text:SetScript("OnEditFocusGained", function() o.focus = true end)
+    o.n_text:SetScript("OnEditFocusLost", function() o.focus = false end)
+    return o
+end
+setmetatable(TextArea, {__call = TextArea.new})
+
+function TextArea:getText()
+    return self.n_text:GetText()
+end
+
+function TextArea:setText(t)
+    if t == self.text then return end
+    self.n_text:SetText(t)
+    self.textChanged(t)
+end
+
+function TextArea:setFocus(f)
+    if self.focus == f then return end
+    self._focus.value = f
+    if f then
+        self.n_text:SetFocus()
+    else
+        self.n_text:ClearFocus()
+    end
+    self.focusChanged(f)
+end
+
+function TextArea:setColor(color)
+    if colorComp(self._color.value, color) then
+        return
+    end
+    self._color.value = color
+    self.n_text:SetTextColor(unpack(color))
+    self.colorChanged(color)
+end
+
+function TextArea:getShadowColor()
+    return {self.n_text:GetShadowColor()}
+end
+    
+function TextArea:setShadowColor(c)
+    c = c or {}
+    local old = self:getShadowColor()
+    if colorComp(old, c) then return end
+    self.n_text:SetShadowColor(unpack(c))
+    self.shadowColorChanged(c)
+end
+
+function TextArea:getContentWidth()
+    local v = self.n_text:GetWidth()
+    if v ~= self._contentWidth.value then
+        self._contentWidth.value = v
+        self.contentWidthChanged(v)
+    end
+    return v
+end
 
 Window = {type = "Window"}
 
