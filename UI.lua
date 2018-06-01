@@ -755,12 +755,16 @@ function MouseArea:setDragTarget(target)
 end
 
 function MouseArea:getEnabled()
-    return self.frame:IsEnabled() and true or false
+    return self.frame:IsEnabled() == 1
 end
 
 function MouseArea:setEnabled(e)
     if e == self.enabled then return end
-    self.frame:Enable(e)
+    if e then
+        self.frame:Enable()
+    else
+        self.frame:Disable()
+    end
     self.enabledChanged(e)
 end
 
