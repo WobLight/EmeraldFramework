@@ -1,7 +1,7 @@
 local _,_,resx, resy = strfind(({GetScreenResolutions()})[GetCurrentResolution()],"^(%d+)x(%d+)$")
 EFrame.frameRecycler = {}
 EFrame.objectRecycler = {}
-local root = CreateFrame("frame","EFrame.root.super")
+local root = CreateFrame("frame","EFrame.root.frame")
 function EFrame:recycle(f)
     if not f.owned then return end
     f:SetParent(nil)
@@ -45,8 +45,8 @@ function Item:new(parent, wrap, mode)
     parent = parent or EFrame.root
     assert(wrap == root or parent)
     local f = Object{properties={"_bottom","_right","_vcentre","_hcentre","marginLeft","marginTop","marginRight","marginBottom", "rotation", "implicitWidth", "implicitHeight"}}
-    f.super = wrap or EFrame:newFrame("frame")
-    f.super.owned = mode == nil or mode
+    f.frame = wrap or EFrame:newFrame("frame")
+    f.frame.owned = mode == nil or mode
     f:attach("width","getWidth","setWidth")
     f:attach("height","getHeight","setHeight")
     f:attach("visible", nil, "setVisible")
@@ -71,7 +71,7 @@ function Item:new(parent, wrap, mode)
     setmetatable(f, Item_MT)
     f.parentChanged:connect(function (parent)
         if not parent then return end
-        f.super:SetParent(parent and parent.super)
+        f.frame:SetParent(parent and parent.frame)
         f:updateVisible()
     end)
     f.parent = parent
@@ -93,8 +93,8 @@ setmetatable(Item, {__call = Item.new})
 
 
 function Item:destroy()
-    self.super:Hide()
-    EFrame:recycle(self.super)
+    self.frame:Hide()
+    EFrame:recycle(self.frame)
     Object.destroy(self)
 end
 
@@ -106,68 +106,68 @@ local function getTop(f)
 end
 
 function Item:getX()
-    local left = getLeft(self.super)
+    local left = getLeft(self.frame)
     if not self.parent then return 0 end
-    local p = self.parent.super
+    local p = self.parent.frame
     return p and left - getLeft(p) or left
 end
 
 function Item:setX(x)
-    self.super:SetPoint("LEFT", self.parent and self.parent.super or self.super ~= root and root or nil, "LEFT", x, 0)
+    self.frame:SetPoint("LEFT", self.parent and self.parent.frame or self.frame ~= root and root or nil, "LEFT", x, 0)
     self.xChanged(x)
 end
 
 function Item:getY()
-    local top = getTop(self.super)
+    local top = getTop(self.frame)
     if not self.parent then return 0 end
-    local p = self.parent.super
+    local p = self.parent.frame
     return - (p and top - getTop(p) or top)
 end
 
 function Item:setY(y)
-    self.super:SetPoint("TOP", self.parent and self.parent.super or self.super ~= root and root or nil, "TOP", 0, -y)
+    self.frame:SetPoint("TOP", self.parent and self.parent.frame or self.frame ~= root and root or nil, "TOP", 0, -y)
     self.yChanged(y)
 end
 
 function Item:setZ(z)
     if self:getZ() == z then return end
     
-    self.super:SetFrameLevel(z)
+    self.frame:SetFrameLevel(z)
     self.zChanged(z)
 end
 
 function Item:getZ()
-    return self.super:GetFrameLevel()
+    return self.frame:GetFrameLevel()
 end
 
 function Item:getWidth()
-    return self.super:GetWidth()
+    return self.frame:GetWidth()
 end
 
 function Item:setWidth(w)
     if self:getWidth() == w then return end
     
-    self.super:SetWidth(w)
+    self.frame:SetWidth(w)
     self.widthChanged(w)
 end
 
 function Item:getHeight()
-    return self.super:GetHeight()
+    return self.frame:GetHeight()
 end
 
 function Item:setHeight(h)
     if self:getHeight() == h then return end
-    self.super:SetHeight(h)
+    self.frame:SetHeight(h)
     self.heightChanged(h)
 end
 
 function Item:mapFrom(item, x, y)
-    local p = self.parent.super
+    local p = self.parent.frame
     local ip = item.parent
     if not ip then
-        return x - getLeft(p) + getLeft(item.super), y - getTop(item.super) + getTop(p)
+        return x - getLeft(p) + getLeft(item.frame), y - getTop(item.frame) + getTop(p)
     end
-    return x - getLeft(p) + getLeft(ip.super), y - getTop(ip.super) + getTop(p)
+    return x - getLeft(p) + getLeft(ip.frame), y - getTop(ip.frame) + getTop(p)
 end
 
 local function anchorX(frame, anchor)
@@ -361,10 +361,10 @@ end
 
 function Item:setVisible(t)
     if t then
-        self.super:Show()
-        self:_setVisible(self.super:IsVisible() and true or false)
+        self.frame:Show()
+        self:_setVisible(self.frame:IsVisible() and true or false)
     else
-        self.super:Hide()
+        self.frame:Hide()
         self:_setVisible(false)
     end
 end
@@ -384,7 +384,7 @@ end
 function Item:updateVisible()
     local old = self._visible.value
     if self.parent and self.parent.visible then
-        self:_setVisible(self.super:IsShown() and true or false)
+        self:_setVisible(self.frame:IsShown() and true or false)
     else
         self:_setVisible(false)
     end
@@ -396,7 +396,7 @@ Rectangle_MT.__newindex = Item_MT.__newindex
 
 function Rectangle:new(parent)
     local o = Item(parent)
-    o._texture = EFrame:newObject("texture",o.super,"CreateTexture")
+    o._texture = EFrame:newObject("texture",o.frame,"CreateTexture")
     o._texture:SetAllPoints()
     setmetatable(o, Rectangle_MT)
     o:attach("color", nil,"setColor")
@@ -422,24 +422,24 @@ end
 
 function Rectangle:_borderSetup()
     if not self._borderTop then
-        self._borderTop = EFrame:newObject("texture", self.super, "CreateTexture", self.layer)
-        self._borderBottom = EFrame:newObject("texture", self.super, "CreateTexture", self.layer)
-        self._borderRight = EFrame:newObject("texture", self.super, "CreateTexture", self.layer)
-        self._borderLeft = EFrame:newObject("texture", self.super, "CreateTexture", self.layer)
+        self._borderTop = EFrame:newObject("texture", self.frame, "CreateTexture", self.layer)
+        self._borderBottom = EFrame:newObject("texture", self.frame, "CreateTexture", self.layer)
+        self._borderRight = EFrame:newObject("texture", self.frame, "CreateTexture", self.layer)
+        self._borderLeft = EFrame:newObject("texture", self.frame, "CreateTexture", self.layer)
         
-        self._borderTop:SetPoint("TOP", self.super,"TOP")
-        self._borderTop:SetPoint("LEFT", self.super,"LEFT")
-        self._borderTop:SetPoint("RIGHT", self.super,"RIGHT")
+        self._borderTop:SetPoint("TOP", self.frame,"TOP")
+        self._borderTop:SetPoint("LEFT", self.frame,"LEFT")
+        self._borderTop:SetPoint("RIGHT", self.frame,"RIGHT")
         
-        self._borderRight:SetPoint("RIGHT", self.super,"RIGHT")
+        self._borderRight:SetPoint("RIGHT", self.frame,"RIGHT")
         self._borderRight:SetPoint("TOP", self._borderTop,"BOTTOM")
         self._borderRight:SetPoint("BOTTOM", self._borderBottom,"TOP")
         
-        self._borderBottom:SetPoint("BOTTOM", self.super,"BOTTOM")
-        self._borderBottom:SetPoint("LEFT", self.super,"LEFT")
-        self._borderBottom:SetPoint("RIGHT", self.super,"RIGHT")
+        self._borderBottom:SetPoint("BOTTOM", self.frame,"BOTTOM")
+        self._borderBottom:SetPoint("LEFT", self.frame,"LEFT")
+        self._borderBottom:SetPoint("RIGHT", self.frame,"RIGHT")
         
-        self._borderLeft:SetPoint("LEFT", self.super,"LEFT")
+        self._borderLeft:SetPoint("LEFT", self.frame,"LEFT")
         self._borderLeft:SetPoint("TOP", self._borderTop,"BOTTOM")
         self._borderLeft:SetPoint("BOTTOM", self._borderBottom,"TOP")
     end
@@ -521,7 +521,7 @@ Image_MT.__newindex = Item_MT.__newindex
 
 function Image:new(parent)
     local o = Item(parent)
-    o._texture = EFrame:newObject("texture",o.super,"CreateTexture")
+    o._texture = EFrame:newObject("texture",o.frame,"CreateTexture")
     o._texture:SetAllPoints()
     setmetatable(o, Image_MT)
     o:attach("source", "getSource","setSource")
@@ -579,7 +579,7 @@ Label_MT.__newindex = Item_MT.__newindex
 
 function Label:new(parent)
     local o = Item(parent)
-    o.n_text = EFrame:newObject("fontstring",o.super,"CreateFontString")
+    o.n_text = EFrame:newObject("fontstring",o.frame,"CreateFontString")
     o.n_text:SetFontObject("GameFontNormal")
     o.n_text:SetAllPoints()
     setmetatable(o, Label_MT)
@@ -677,14 +677,14 @@ function MouseArea:new(parent)
     o:attach("hoover")
     o:attach("containsPress")
     o:attachSignal("clicked")
-    o.super:RegisterForClicks("LeftButtonDown","LeftButtonUp")
-    o.super:SetScript("OnMouseUp", function ()
+    o.frame:RegisterForClicks("LeftButtonDown","LeftButtonUp")
+    o.frame:SetScript("OnMouseUp", function ()
         if not o.containsPress then
             o.pressed = false
         end
     end)
-    o.super:SetScript("OnClick", function ()
-        if o.super:GetButtonState() == "NORMAL" then
+    o.frame:SetScript("OnClick", function ()
+        if o.frame:GetButtonState() == "NORMAL" then
             o.pressed = true
         else
             if o.containsPress then
@@ -694,29 +694,29 @@ function MouseArea:new(parent)
         end
     end)
     local ox, oy
-    o.super:SetScript("OnDragStart", function ()
+    o.frame:SetScript("OnDragStart", function ()
         local x, y = GetCursorPosition()
-        ox = x / o.super:GetEffectiveScale()
-        oy = - y / o.super:GetEffectiveScale()
+        ox = x / o.frame:GetEffectiveScale()
+        oy = - y / o.frame:GetEffectiveScale()
         o.dragActive = true
     end)
-    o.super:SetScript("OnDragStop", function ()
+    o.frame:SetScript("OnDragStop", function ()
         ox = nil
         oy = nil
         o.dragActive = false
     end)
-    o.super:SetScript("OnUpdate", function ()
+    o.frame:SetScript("OnUpdate", function ()
         if o.dragActive then
             local x, y = GetCursorPosition()
-            x = x / o.super:GetEffectiveScale()
-            y = - y / o.super:GetEffectiveScale()
+            x = x / o.frame:GetEffectiveScale()
+            y = - y / o.frame:GetEffectiveScale()
             o.dragTarget.x = o.dragTarget.x + x - ox
             o.dragTarget.y = o.dragTarget.y + y - oy
             ox = x
             oy = y
         end
         if o.pressed or o.hoover then
-            o.containsMouse = MouseIsOver(o.super) and true or false
+            o.containsMouse = MouseIsOver(o.frame) and true or false
         end
     end)
     setmetatable(o, MouseArea_MT)
@@ -730,13 +730,13 @@ end
 setmetatable(MouseArea, {__call = MouseArea.new})
 
 function MouseArea:destroy()
-    self.super:SetScript("OnClick",nil)
-    self.super:SetScript("OnMouseUp",nil)
-    self.super:SetScript("OnUpdate",nil)
-    self.super:SetScript("OnDragStart",nil)
-    self.super:SetScript("OnDragStop",nil)
-    self.super:Disable()
-    self.super:RegisterForDrag()
+    self.frame:SetScript("OnClick",nil)
+    self.frame:SetScript("OnMouseUp",nil)
+    self.frame:SetScript("OnUpdate",nil)
+    self.frame:SetScript("OnDragStart",nil)
+    self.frame:SetScript("OnDragStop",nil)
+    self.frame:Disable()
+    self.frame:RegisterForDrag()
     Item.destroy(self)
 end
 
@@ -744,21 +744,21 @@ function MouseArea:setDragTarget(target)
     if self.dragTarget == target then return end
     
     if not self.dragTarget then
-        self.super:RegisterForDrag("LeftButton")
+        self.frame:RegisterForDrag("LeftButton")
     elseif not target then
-        self.super:RegisterForDrag()
+        self.frame:RegisterForDrag()
     end
     self._dragTarget.value = target
     self.dragTargetChanged(target)
 end
 
 function MouseArea:getEnabled()
-    return self.super:IsEnabled() and true or false
+    return self.frame:IsEnabled() and true or false
 end
 
 function MouseArea:setEnabled(e)
     if e == self.enabled then return end
-    self.super:Enable(e)
+    self.frame:Enable(e)
     self.enabledChanged(e)
 end
 
