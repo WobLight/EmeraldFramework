@@ -784,7 +784,7 @@ function Button:new(parent)
     o.background.layer = "background"
     o.image = Image(o)
     o.image.layer = "artwork"
-    o.background.color = EFrame.bind(function () return o.flat and {0,0,0,0} or (o.containsPress or o.checked) and {0,.25,0} or {0,0.75,0} end)
+    o.background.color = EFrame.bind(function () return not o.enabled and ((o.containsPress or o.checkedChanged) and {0.5,0.75,0.5} or {.1,.25,.1}) or o.flat and {0,0,0,0} or (o.containsPress or o.checked) and {0,.25,0} or {0,0.75,0} end)
     o.textLabel.anchorFill = o
     o.textLabel.marginLeft = 2
     o.textLabel.marginRight = 2
