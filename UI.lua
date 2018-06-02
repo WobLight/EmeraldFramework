@@ -1043,6 +1043,10 @@ function TextArea:getContentWidth()
     return v
 end
 
+function TextArea:selectText(p0, p1)
+    self.n_text:HighlightText(p0,p1)
+end
+
 Window = {type = "Window"}
 
 Window_MT = Object.IndexWrapper(MouseArea_MT, {__index=Window})
