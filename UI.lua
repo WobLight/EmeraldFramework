@@ -1124,8 +1124,8 @@ function Window:setCentralItem(f)
     if f == self.centralItem then return end
     
     if f then
-        self.implicitWidth = EFrame.bind(function() return max(self.decoration.implicitWidth, f.width + f.marginLeft + f.marginRight) end)
-        self.implicitHeight = EFrame.bind(function() return f.height + f.marginTop + f.marginBottom + self.decoration.height end)
+        self.implicitWidth = EFrame.bind(function(self) return max(self.decoration.implicitWidth, f.visible and f.width + f.marginLeft + f.marginRight or 0) end)
+        self.implicitHeight = EFrame.bind(function() return (f.visible and f.height + f.marginTop + f.marginBottom or 0) + self.decoration.height end)
         f.anchorTop = self.decoration.bottom
         f.anchorLeft = self.left
         f.margins = 4
